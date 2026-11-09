@@ -2,7 +2,7 @@
 
 이 문서는 제작 중 확인한 실패와 정책 정정을 재사용 가능한 규칙으로 정리한 독립 노트다. 원고·캐릭터·대사·작품별 프롬프트·개인 대화·비공개 저장소 식별자는 포함하지 않는다. 과거 규칙을 전부 현재 작업에 중첩해서 적용하지 않고, 작업의 현재 입력 모드와 검토 기록을 따른다.
 
-실행 순서는 [ComfyUI 인계](COMFYUI_HANDOFF.md)와 [제작 운영](PRODUCTION_RUNBOOK.md), 원고·구도의 판단은 [작가 공정](AUTHORING_WORKFLOW.md), 증상별 복구는 [트러블슈팅](TROUBLESHOOTING.md)을 읽는다. 이 문서의 **정책 결정**, 코드로 확인 가능한 **구현**, 실제 그림이나 장치에서 확인해야 하는 **미검증 항목**을 구분한다.
+실행 순서는 [에이전트 이미지 제작 절차](AGENT_IMAGE_WORKFLOW.md)와 [제작 운영](PRODUCTION_RUNBOOK.md), 원고·구도의 판단은 [작가 공정](AUTHORING_WORKFLOW.md), 증상별 복구는 [트러블슈팅](TROUBLESHOOTING.md)을 읽는다. 이 문서의 **정책 결정**, 코드로 확인 가능한 **구현**, 실제 그림이나 장치에서 확인해야 하는 **미검증 항목**을 구분한다.
 
 ## 1. 재발 방지를 생산량보다 우선한다
 
@@ -35,8 +35,6 @@
 **결정:** 기본 `text_only`는 자체·타인 이미지를 모두 생성 입력에서 제외한다. 별도로 승인된 자체 첫 회차 원화 참조 예외는 지정 파일·해시·권한·개수·도구와 승인된 스타일 비교 기준에 결합한다. 비교 검수에 사용한 새 결과를 후속 생성 참조로 자동 추가하지 않는다.
 
 **구현:** text-only 작업은 이미지 필드를 거절한다. 기존 `authorized_own_episode1_reference` 경로는 지정 카탈로그와 컷당 원화 한 장의 실제 사용 선언을 검사한다. 과거 작업의 mode와 실제 입력 이력을 소급 변경하지 않는다. [text-only 계약](../../src/generation_policy.py) · [자체 원화 계약](../../src/owned_episode_reference.py) · [검사](../../tests/test_factory.py) · [자체 원화 검사](../../tests/test_owned_episode_reference.py)
-
-**정정:** 과거 imagegen의 자체 원화 참조 허용은 ComfyUI의 새 모델·노드·수신자에 대한 입력 허용이 아니다. 현재 factory의 ComfyUI 반입은 검토된 core class를 사용하는 text-only graph로 제한한다. 임의 API graph를 실행하는 native runner와 factory의 제작 정책을 구분한다. [Comfy 반입](../../src/factory.py) · [반입 검사](../../tests/test_comfy_factory.py)
 
 **미검증:** 텍스트 반복이나 원화 한 장 참조가 완전히 같은 그림체·인물·장소를 보장하지 않는다. 스타일 일치와 참조 내용의 유입 여부는 실제 비교해야 한다.
 
@@ -104,7 +102,7 @@
 
 **확인된 범위:** 상태 컴파일·수정 정규화·batch 준비는 반복 입력과 충돌을 줄이는 구현이다. 로컬 텍스트 처리 시험은 이미지 품질이나 전체 제작 단축률의 증거가 아니다. [제어 코드](../../src/production_control.py) · [batch 도구](../../tools/compile_production_batch.py) · [검사](../../tests/test_production_control.py)
 
-**미검증:** 이전에 제시된 100배 단축 목표와 연속 작업시간의 전체 분해는 측정 완료 상태가 아니다. ComfyUI 설치나 CUDA probe도 캐릭터·공간·식자 문제 해결을 보장하지 않는다. RTX 5060은 예정 대상이며 실제 GPU 생성은 별도 기록해야 한다.
+**미검증:** 이전에 제시된 100배 단축 목표와 연속 작업시간의 전체 분해는 측정 완료 상태가 아니다. 환경 준비만으로 캐릭터·공간·식자 문제 해결을 보장하지 않는다. 실제 원화 생성과 시각 검수는 별도 기록해야 한다.
 
 ## 13. 재사용 지식은 남기고 제작 원본은 공개 소스와 분리한다
 
@@ -112,7 +110,7 @@
 
 **구현:** 명시적 allowlist로 격리 export하고 공개 트리·ZIP·의존성과 staged 내용을 검사한다. 새로운 파일과 테스트를 추가하면 새 export를 검증한다. [export 도구](../../tools/public_release.py) · [경계 검사](../../tests/test_public_release.py) · [릴리즈 절차](RELEASING.md)
 
-공개 스킬의 canonical 문서는 `docs/public/skills/`에 둔다. 선택적 [설치 도구](../../tools/install_workflow_skills.py)는 고정된 시작·제작·복구 스킬 세 개만 repo-local `.agents/skills/`로 복사한다. 기본 `--check`는 읽기 전용이고 `--install`은 명시적 설치다. 동일 내용은 유지하고 충돌 파일은 덮지 않는다. 전역 설정·네트워크·모델 설치와 구분한다. [복구 스킬](skills/toon-recover/SKILL.md)
+공개 스킬의 canonical 문서는 `docs/public/skills/`에 둔다. 선택적 [설치 도구](../../tools/install_workflow_skills.py)는 고정된 제작·복구 스킬 두 개만 repo-local `.agents/skills/`로 복사한다. 기본 `--check`는 읽기 전용이고 `--install`은 명시적 설치다. 동일 내용은 유지하고 충돌 파일은 덮지 않는다. 전역 설정·네트워크·모델 설치와 구분한다. [복구 스킬](skills/toon-recover/SKILL.md)
 
 **한계:** 이전 스냅샷의 테스트·원격 바이트 대조·CI 성공은 새 변경의 검증 결과가 아니다. 실행 기록과 완료 보고는 해당 commit와 실제 검사 범위에 결합한다.
 

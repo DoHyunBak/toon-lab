@@ -47,6 +47,13 @@ class FactoryTests(unittest.TestCase):
             self.assertEqual(image.size, (800, 1400))
         self.assertEqual(job_status(self.job)["approval"], "not_reviewed")
 
+    def test_unsupported_provider_is_rejected_without_changing_job_or_art(self):
+        prepare_job(self.source, self.job)
+        before = {p.relative_to(self.job): p.read_bytes() for p in self.job.rglob('*') if p.is_file()}
+        with self.assertRaisesRegex(ValueError, "Unsupported generation provider"):
+            import_cut(self.job, "cut_001", self.art, self.prompt, provider="retired-backend")
+        self.assertEqual({p.relative_to(self.job): p.read_bytes() for p in self.job.rglob('*') if p.is_file()}, before)
+
     def test_missing_art_blocks_build_without_final_output(self):
         prepare_job(self.source, self.job)
         with self.assertRaisesRegex(ValueError, "Missing"):

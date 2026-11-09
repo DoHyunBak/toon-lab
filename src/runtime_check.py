@@ -46,8 +46,8 @@ def check_runtime(*, project_root=None, reference_catalog=None) -> dict:
         checks["korean_font"] = {"status": "pass", "detail": f"Verified Korean glyphs: {font.path}"}
     except (ImportError, OSError, ValueError) as error:
         checks["korean_font"] = {"status": "blocked", "detail": str(error),
-                                 "action": "Set WEBTOON_FONT to an installed Korean TrueType/OpenType font "
-                                           "(Windows Malgun, Noto Sans CJK or Nanum Gothic)."}
+                                 "action": "Run tools/setup_open_fonts.py to verify Pretendard and its OFL notice; "
+                                           "WEBTOON_FONT must point to an approved font file."}
 
     try:
         if Image is None:
@@ -80,10 +80,10 @@ def check_runtime(*, project_root=None, reference_catalog=None) -> dict:
     return {"status": "ready" if all(c["status"] == "pass" for c in checks.values()) else "blocked",
             "project_root": str(root), "reference_catalog": str(catalog.resolve()) if reference_catalog is not None else None,
             "checks": checks,
-            "image_generation": {"provider": "comfyui", "executor": "self_hosted_server",
+            "image_generation": {"provider": "imagegen", "executor": "assistant_tool",
                                  "availability": "not_locally_detectable",
-                                 "detail": "Doctor makes no network calls. Use src.comfy_runner --check for server preflight, "
-                                           "then --execute for actual generation. Legacy imagegen remains a separate assistant tool."}}
+                                 "detail": "Doctor checks the local Python assembly environment without network calls. "
+                                           "Verify image generation and file saving through the agent's connected image tool."}}
 
 
 def _check_references(catalog):

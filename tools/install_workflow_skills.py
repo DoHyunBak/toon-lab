@@ -1,6 +1,6 @@
-"""Optionally copy this repository's three workflow skills into .agents/skills.
+"""Optionally copy this repository's two workflow skills into .agents/skills.
 
-The default/--check mode only reads files. --install copies the three known
+The default/--check mode only reads files. --install copies the two known
 SKILL.md files; it never edits user-global configuration or replaces conflicts.
 """
 
@@ -14,7 +14,7 @@ import stat
 import sys
 
 
-SKILL_NAMES = ("toon-comfy-start", "toon-production", "toon-recover")
+SKILL_NAMES = ("toon-production", "toon-recover")
 
 
 def _is_link(path: Path) -> bool:

@@ -1,7 +1,6 @@
-"""Create ten clearly marked mock cut/atari/background trios and assemble them.
+"""Create ten clearly marked placeholder cuts and assemble them.
 
-These primitives exercise file handling and lettering only. Mock guides are
-NOT preprocessed ControlNet inputs and must be replaced before real rendering.
+These primitives exercise file handling and lettering only; they are not AI art.
 """
 from __future__ import annotations
 
@@ -52,31 +51,6 @@ def _mock_art(index: int, cut_id: str) -> Image.Image:
     return image
 
 
-def _mock_guide(index: int, cut_id: str, role: str) -> Image.Image:
-    image = Image.new("RGB", (768, 1024), "#e9eceb" if role == "atari" else "white")
-    draw = ImageDraw.Draw(image)
-    if role == "atari":
-        # Deliberately schematic; no claim of an OpenPose/DWPose encoding.
-        x = 340 + (index % 3) * 35
-        draw.ellipse((x - 48, 260, x + 48, 356), outline="#45555e", width=7)
-        for endpoints in [((x, 356), (x, 650)), ((x, 410), (x - 130, 550)),
-                          ((x, 410), (x + 110, 500 - (index % 2) * 100)),
-                          ((x, 650), (x - 90, 875)), ((x, 650), (x + 100, 875))]:
-            draw.line(endpoints, fill="#576e88", width=10)
-        for y in (356, 410, 650):
-            draw.ellipse((x - 10, y - 10, x + 10, y + 10), fill="#c18366")
-    else:
-        vanish = (350 + (index % 3) * 25, 540)
-        draw.rectangle((120, 280, 648, 800), outline="#40494a", width=5)
-        for corner in ((0, 100), (768, 100), (0, 1024), (768, 1024)):
-            draw.line((corner, vanish), fill="#72817e", width=3)
-        draw.rectangle((300, 430, 450, 800), outline="#40494a", width=4)
-    font = ImageFont.load_default(size=20)
-    draw.text((20, 20), f"OFFLINE {role.upper()} MOCK / {cut_id}", font=font, fill="#172724")
-    draw.text((20, 52), "NOT A PREPROCESSED CONTROLNET GUIDE", font=font, fill="#842d2d")
-    return image
-
-
 def _verify_image(path: Path, *, width: int, height: int | None = None):
     if not path.is_file() or path.stat().st_size == 0:
         raise RuntimeError(f"Missing/empty demo artifact: {path}")
@@ -93,9 +67,7 @@ def run_demo(workspace: str | Path, *, font_path=None, overwrite=False) -> Path:
     episode = validate_episode(json.loads(source.read_text(encoding="utf-8-sig")))
     if len(episode["cuts"]) != 10:
         raise ValueError("The offline demo requires exactly ten cuts in example.json")
-    roots = {"image": workspace / "05_rendered_cuts" / "demo",
-             "atari": workspace / "02_conti_atari" / "demo",
-             "background": workspace / "03_backgrounds" / "demo"}
+    roots = {"image": workspace / "05_rendered_cuts" / "demo"}
     demo_source = _safe_path(source.parent / "demo_source.json", workspace)
     batches = _safe_path(source.parent / "demo_chunks", workspace)
     output = _safe_path(workspace / "06_output_webtoon" / "demo", workspace)
@@ -108,9 +80,7 @@ def run_demo(workspace: str | Path, *, font_path=None, overwrite=False) -> Path:
         if not cut.get("image"):
             raise ValueError(f"{cut['id']}: demo image path is required")
         raw = _safe_path(source.parent / cut["image"], roots["image"])
-        assets = {"image": raw,
-                  "atari": _safe_path(roots["atari"] / f"{cut['id']}.png", roots["atari"]),
-                  "background": _safe_path(roots["background"] / f"{cut['id']}.png", roots["background"])}
+        assets = {"image": raw}
         for role, target in assets.items():
             if target.suffix.lower() != ".png":
                 raise ValueError(f"Demo assets must use PNG paths: {target}")
@@ -119,12 +89,11 @@ def run_demo(workspace: str | Path, *, font_path=None, overwrite=False) -> Path:
             seen.add(target)
             _check_write_target(target, overwrite)
             cut[role] = Path(os.path.relpath(target, source.parent)).as_posix()
-        # These are file-I/O mocks, deliberately excluded from any real GPU claim.
+        # These file-I/O placeholders are not generated artwork.
         cut["demo_placeholder"] = True
-        cut["controls"] = []
         planned.append((index, cut, assets))
     episode["demo_mode"] = True
-    episode["guide_warning"] = "OFFLINE MOCKS ONLY: replace atari/background with compatible preprocessed guides before real ComfyUI rendering."
+    episode["demo_warning"] = "OFFLINE PLACEHOLDERS ONLY: use the agent image tool to create actual artwork."
     payload = json.dumps(episode, ensure_ascii=False, indent=2) + "\n"
 
     # Catch native-script errors, bad fonts and impossible balloons BEFORE any
@@ -137,16 +106,11 @@ def run_demo(workspace: str | Path, *, font_path=None, overwrite=False) -> Path:
         for index, cut, assets in planned:
             art = _mock_art(index, cut["id"])
             render_bubbles(art, cut["dialogue"], font_path=font_path)
-            pending.extend([(assets["image"], art),
-                            (assets["atari"], _mock_guide(index, cut["id"], "atari")),
-                            (assets["background"], _mock_guide(index, cut["id"], "background"))])
+            pending.append((assets["image"], art))
     for target, image in pending:
         target.parent.mkdir(parents=True, exist_ok=True)
         image.save(target)
-        if target.is_relative_to(roots["image"].resolve()):
-            _verify_image(target, width=800, height=560 if image.height == 560 else 440)
-        else:
-            _verify_image(target, width=768, height=1024)
+        _verify_image(target, width=800, height=560 if image.height == 560 else 440)
     demo_source.write_text(payload, encoding="utf-8")
     index = format_script(demo_source, batches)
     result = stitch_episode(batches / index["episode"], output, width=800, padding=120,

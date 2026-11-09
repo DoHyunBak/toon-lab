@@ -9,17 +9,14 @@ description: Resume interrupted toon_lab work or diagnose repeated production fa
 `docs/public/TROUBLESHOOTING.md`를 읽는다. 사용자와 현재 목적·범위를 맞추고 기존
 파일을 지우거나 완료 표시를 고치는 것으로 시작하지 않는다.
 
-## ComfyUI 실행이 중단된 경우
+## 이미지 생성이 중단된 경우
 
-1. 실제 workflow snapshot, receipt, server origin, output node, prompt_id, 존재하는
-   출력과 해시를 확인한다. 원본 graph나 서버가 바뀌었으면 같은 실행으로 재개하지 않는다.
-2. `completed`면 로컬 출력 바이트와 receipt를 검증한다. 새 GPU 제출은 하지 않는다.
-3. prompt_id가 기록된 미완료 실행은 동일 입력/서버/출력 경로로 runner `--resume`을
-   사용한다. 이는 기존 history 조회/다운로드이며 새 POST가 아니다.
-4. `submission_unknown` 또는 prompt_id가 없으면 queue/history와 수신 여부를
-   조사한다. receipt에 임의 ID를 넣거나 같은 POST를 자동 반복하지 않는다. 수신 여부를
-   확인할 수 없으면 보류 사실과 다음 조치를 남긴다. 다른 사용자의 작업을 취소하지 않는다.
-5. receipt에 없는 출력이 이미 있으면 보존·검증부터 한다. 덮어쓰기 재시도를 하지 않는다.
+1. 실제 도구·프롬프트·입력/출력 파일과 생성 기록을 확인한다. 이미 완료된 컷은
+   원본 해시와 이미지를 검증한 뒤 재사용하고 중복 생성하지 않는다.
+2. 도구의 수신·완료 여부를 확인할 수 없으면 자동으로 같은 요청을 반복하지 않는다.
+   확인 가능한 결과와 남은 불확실성을 기록한다.
+3. 새 생성이 필요하면 기존 원화·실패·검수 이력을 보존하고 새 후보로 만든다.
+   `import --replace`로 반입한 뒤 변경된 출력의 식자·조립·검수를 다시 수행한다.
 
 ## 장면/식자/공정의 반복 실패
 

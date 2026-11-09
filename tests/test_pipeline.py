@@ -1,22 +1,15 @@
 """Outcome tests: no GPU, network, vendor execution or downloaded fonts."""
 from __future__ import annotations
 
-import copy
-from email.message import Message
-import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
-import urllib.error
-import urllib.parse
-from urllib.response import addinfourl
 
 from PIL import Image, ImageChops, ImageFont
 
 from src.bubble_renderer import render_bubbles, wrap_text
-from src.comfy_client import ComfyClient, ComfyError, build_workflow, output_node_id, render_episode
 from src.script_formatter import format_script, parse_script
 from src.webtoon_stitcher import stitch_episode
 
@@ -274,201 +267,19 @@ class StitchTests(FilesTest):
         self.assertEqual(victim.read_bytes(), b"private art")
 
 
-class Response:
-    def __init__(self, data):
-        self.data = json.dumps(data).encode() if isinstance(data, dict) else data
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, *_):
-        return False
-
-    def read(self, size=-1):
-        return self.data if size < 0 else self.data[:size]
-
-
-class FakeComfyAPI:
-    """HTTP protocol fixture passed into the real urllib-based client."""
-    def __init__(self, graph):
-        self.calls = []
-        self.graph = graph
-        self.queued = {}
-        self.polls = {}
-        buffer = io.BytesIO()
-        Image.new("RGB", (768, 1024), "#8cafa1").save(buffer, format="PNG")
-        self.png = buffer.getvalue()
-        self.info = {node["class_type"]: {"input": {"required": {}}} for node in graph.values()}
-        choices = {"CheckpointLoaderSimple": {"ckpt_name": [["base.safetensors"]]},
-                   "LoraLoader": {"lora_name": [["min.safetensors"]]},
-                   "ControlNetLoader": {"control_net_name": [["pose.safetensors", "line.safetensors"]]},
-                   "KSampler": {"sampler_name": [["euler"]], "scheduler": [["normal"]]}}
-        for kind, specs in choices.items():
-            if kind in self.info:
-                self.info[kind]["input"]["required"] = specs
-
-    def __call__(self, request, timeout):
-        self.calls.append((request.get_method(), request.full_url, request.data, timeout))
-        url = urllib.parse.urlsplit(request.full_url)
-        if url.path == "/object_info":
-            return Response(self.info)
-        if url.path == "/upload/image":
-            if b"\x89PNG" not in request.data or b'name="image"' not in request.data:
-                raise AssertionError("Guide must be uploaded as multipart image bytes")
-            return Response({"name": "server-renamed.png", "subfolder": "webtoon_factory", "type": "input"})
-        if url.path == "/prompt":
-            prompt_id = f"job-{len(self.queued)+1}"
-            self.queued[prompt_id] = json.loads(request.data)["prompt"]
-            return Response({"prompt_id": prompt_id, "node_errors": {}})
-        if url.path.startswith("/history/"):
-            prompt_id = url.path.rsplit("/", 1)[-1]
-            self.polls[prompt_id] = self.polls.get(prompt_id, 0) + 1
-            if self.polls[prompt_id] == 1:
-                return Response({})
-            node = output_node_id(self.queued[prompt_id])
-            return Response({prompt_id: {"status": {"completed": True, "status_str": "success"},
-                                        "outputs": {"unrelated": {"images": [{"filename": "preview.png"}]},
-                                                    node: {"images": [{"filename": "cut.png", "type": "output"}]}}}})
-        if url.path == "/view":
-            if urllib.parse.parse_qs(url.query).get("filename") != ["cut.png"]:
-                raise AssertionError("Client selected an unrelated preview output")
-            return Response(self.png)
-        raise AssertionError(f"Unexpected HTTP endpoint: {url.path}")
-
-
-class ComfyTests(FilesTest):
-    def setUp(self):
-        super().setUp()
-        self.config = {"checkpoint": "base.safetensors", "model_family": "sdxl", "width": 768, "height": 1024}
-        self.characters = {"characters": {"min": {"triggers": "min_identity", "lora": "min.safetensors", "strength": 0.75}}}
-        self.cut = {"id": "cut_001", "page": 1, "description": "test pose", "characters": ["min"],
-                    "controls": [{"image": "guide.png", "model": "pose.safetensors"},
-                                 {"image": "background.png", "model": "line.safetensors", "strength": 0.6}],
-                    "dialogue": [{"text": "검증 완료", "type": "narration", "position": "top"}]}
-        Image.new("RGB", (384, 512), "white").save(self.root / "guide.png")
-        Image.new("RGB", (768, 1024), "black").save(self.root / "background.png")
-        self.source = write_json(self.root / "episode.json", {"cuts": [self.cut]})
-
-    def test_default_transport_rejects_cross_origin_redirect(self):
-        headers = Message()
-        headers["Location"] = "http://comfy.example.invalid/object_info"
-        response = addinfourl(io.BytesIO(b""), headers, "http://127.0.0.1:8188/object_info", 302)
-        response.msg = "Found"
-        with patch("urllib.request.HTTPHandler.http_open", return_value=response) as transport:
-            with self.assertRaisesRegex(ComfyError, "HTTP 302"):
-                ComfyClient()._json("/object_info")
-        transport.assert_called_once()
-
-    def test_legacy_render_requires_opt_in_for_remote_config(self):
-        config = {**self.config, "server": "https://comfy.example.invalid", "allow_remote": True}
-        with patch("urllib.request.HTTPHandler.http_open") as http:
-            with patch("urllib.request.HTTPSHandler.https_open") as https:
-                with self.assertRaisesRegex(ValueError, "allow-remote"):
-                    render_episode(self.source, self.characters, config, self.root / "remote", check=True)
-        http.assert_not_called()
-        https.assert_not_called()
-
-    def test_lora_and_both_controlnets_chain_into_sampler(self):
-        graph = build_workflow(self.cut, self.characters, self.config)
-        kinds = [n["class_type"] for n in graph.values()]
-        self.assertEqual(kinds.count("LoraLoader"), 1)
-        self.assertEqual(kinds.count("ControlNetApplyAdvanced"), 2)
-        positive = [n["inputs"]["text"] for n in graph.values() if n["class_type"] == "CLIPTextEncode"]
-        self.assertTrue(any("min_identity" in text for text in positive))
-        sampler = next(n for n in graph.values() if n["class_type"] == "KSampler")
-        control_id = sampler["inputs"]["positive"][0]
-        self.assertEqual(graph[control_id]["class_type"], "ControlNetApplyAdvanced")
-        prior_id = graph[control_id]["inputs"]["positive"][0]
-        self.assertEqual(graph[prior_id]["class_type"], "ControlNetApplyAdvanced")
-        family_mismatch = copy.deepcopy(self.characters)
-        family_mismatch["characters"]["min"]["model_family"] = "sd15"
-        with self.assertRaises(ValueError):
-            build_workflow(self.cut, family_mismatch, self.config)
-
-    def test_dry_run_writes_workflows_but_no_images_or_network_requests(self):
-        output = self.root / "dry"
-        with patch("urllib.request.urlopen", side_effect=AssertionError("dry-run made a network request")):
-            result = render_episode(self.source, self.characters, self.config, output, dry_run=True)
-        self.assertEqual(result["status"], "dry_run_not_rendered")
-        self.assertEqual(len(list((output / "workflows").glob("*.json"))), 1)
-        self.assertFalse(list(output.glob("*.png")))
-        self.assertFalse((output / "episode.rendered.json").exists())
-        self.assertEqual(len(result["cuts"][0]["uploads"]), 2)
-
-    def test_actual_client_upload_queue_poll_download_and_stitch_with_protocol_fixture(self):
-        graph = build_workflow(self.cut, self.characters, self.config)
-        api = FakeComfyAPI(graph)
-        client = ComfyClient(opener=api, sleeper=lambda _: None)
-        output = self.root / "renders"
-        result = render_episode(self.source, self.characters, self.config, output, client=client)
-        self.assertEqual(result["status"], "rendered")
-        rendered = Path(result["rendered_manifest"])
-        self.assertTrue(rendered.is_file())
-        manifest = json.loads(rendered.read_text(encoding="utf-8"))
-        self.assertTrue((rendered.parent / manifest["cuts"][0]["image"]).is_file())
-        self.assertEqual(sum(method == "POST" and "/prompt" in url for method, url, _, _ in api.calls), 1)
-        self.assertEqual(sum("/upload/image" in url for _, url, _, _ in api.calls), 2)
-        self.assertTrue(all(0 < timeout <= 30 for _, _, _, timeout in api.calls))
-        queued = next(iter(api.queued.values()))
-        self.assertTrue(all(n["inputs"]["image"] == "webtoon_factory/server-renamed.png"
-                            for n in queued.values() if n["class_type"] == "LoadImage"))
-        final = stitch_episode(rendered, self.root / "webtoon")
-        self.assertTrue(final.is_file())
-
-    def test_missing_model_and_node_errors_do_not_queue_or_report_success(self):
-        graph = build_workflow(self.cut, self.characters, self.config)
-        api = FakeComfyAPI(graph)
-        api.info["CheckpointLoaderSimple"]["input"]["required"]["ckpt_name"] = [["other.safetensors"]]
-        with self.assertRaisesRegex(ComfyError, "unavailable"):
-            render_episode(self.source, self.characters, self.config, self.root / "bad", client=ComfyClient(opener=api))
-        self.assertTrue(all(method == "GET" for method, _, _, _ in api.calls))
-        client = ComfyClient(opener=lambda request, **_: Response({"prompt_id": "bad", "node_errors": {"1": "invalid"}}))
-        with self.assertRaises(ComfyError):
-            client.queue(graph)
-
-    def test_execution_failure_timeout_and_no_automatic_post_retry(self):
-        failure = {"job": {"status": {"messages": [["execution_error", {"exception_message": "out of memory"}]]}}}
-        client = ComfyClient(opener=lambda request, **_: Response(failure))
-        with self.assertRaisesRegex(ComfyError, "execution failed"):
-            client.wait("job", "9")
-        clock = [0.0]
-        def sleep(seconds):
-            clock[0] += seconds
-        client = ComfyClient(timeout=0.03, poll_interval=0.01, opener=lambda request, **_: Response({}),
-                             clock=lambda: clock[0], sleeper=sleep)
-        with self.assertRaises(TimeoutError):
-            client.wait("job", "9")
-        opener = unittest.mock.Mock(side_effect=urllib.error.URLError("connection lost"))
-        with self.assertRaisesRegex(ComfyError, "not retried"):
-            ComfyClient(opener=opener).queue({})
-        self.assertEqual(opener.call_count, 1)
-
-    def test_mismatched_guide_aspect_rejected_before_http(self):
-        Image.new("RGB", (512, 512), "white").save(self.root / "guide.png")
-        with patch("urllib.request.urlopen", side_effect=AssertionError("validation must precede network")):
-            with self.assertRaisesRegex(ValueError, "aspect"):
-                render_episode(self.source, self.characters, self.config, self.root / "bad-guide")
-
-    def test_base_workflow_json_is_loaded_and_injected_without_discarding_metadata(self):
-        base = json.loads((Path(__file__).resolve().parents[1] / "workspace" / "workflow_api.example.json").read_text())
-        base["1"]["_meta"] = {"title": "retained node metadata"}
-        template = write_json(self.root / "workflow.json", base)
-        result = render_episode(self.source, self.characters, self.config, self.root / "template-dry",
-                                dry_run=True, workflow_template=template)
-        graph = result["cuts"][0]["workflow"]
-        self.assertEqual(graph["1"]["_meta"], base["1"]["_meta"])
-        self.assertEqual(graph["1"]["inputs"]["ckpt_name"], "base.safetensors")
-        text = " ".join(n["inputs"].get("text", "") for n in graph.values())
-        self.assertIn("min_identity", text)
-        self.assertIn("clean lineart", text)
-        self.assertEqual(sum(n["class_type"] == "ControlNetApplyAdvanced" for n in graph.values()), 2)
-        base["extra"] = {"class_type": "UnknownCustomNode", "inputs": {}}
-        with self.assertRaises(ValueError):
-            render_episode(self.source, self.characters, self.config, self.root / "unsupported",
-                           dry_run=True, workflow_template=base)
-
-
 class TenCutPipelineTests(FilesTest):
+    def test_offline_demo_builds_placeholder_art_without_unused_guide_assets(self):
+        from src.demo import run_demo
+        example = json.loads((Path(__file__).resolve().parents[1] / "workspace/01_scripts/example.json").read_text(encoding="utf-8"))
+        workspace = self.root / "workspace"
+        write_json(workspace / "01_scripts/example.json", example)
+        output = run_demo(workspace)
+        manifest = json.loads(output.read_text(encoding="utf-8"))
+        self.assertEqual(len(manifest['cuts']), 10)
+        self.assertEqual(len(list((workspace / '05_rendered_cuts/demo').glob('*.png'))), 10)
+        self.assertFalse((workspace / '02_conti_atari').exists())
+        self.assertFalse((workspace / '03_backgrounds').exists())
+
     def test_demo_refuses_escaped_path_before_overwriting_any_art(self):
         from src.demo import run_demo
         example = json.loads((Path(__file__).resolve().parents[1] / "workspace" / "01_scripts" / "example.json").read_text(encoding="utf-8"))
@@ -481,17 +292,15 @@ class TenCutPipelineTests(FilesTest):
             run_demo(workspace, overwrite=True)
         self.assertEqual(important.read_bytes(), b"original art must survive")
 
-    def test_ten_mock_trios_two_chunks_korean_webtoon_artifacts(self):
+    def test_ten_placeholder_cuts_two_chunks_korean_webtoon_artifacts(self):
         cuts = []
         for i in range(10):
-            # Each cut has a mock atari, background and art; no GPU required.
-            for role, color in (("atari", "white"), ("background", "#dddddd"), ("art", "#9db6ab")):
-                path = self.root / role / f"{i}.png"
-                path.parent.mkdir(exist_ok=True)
-                Image.new("RGB", (384, 512), color).save(path)
-                self.assertGreater(path.stat().st_size, 0)
+            path = self.root / 'art' / f"{i}.png"
+            path.parent.mkdir(exist_ok=True)
+            Image.new("RGB", (384, 512), "#9db6ab").save(path)
+            self.assertGreater(path.stat().st_size, 0)
             cuts.append({"id": f"cut_{i:03d}", "description": f"테스트 장면 {i}",
-                         "atari": f"atari/{i}.png", "background": f"background/{i}.png", "image": f"art/{i}.png",
+                         "image": f"art/{i}.png",
                          "dialogue": [{"speaker": "테스트", "text": f"{i+1}번째 컷입니다.", "position": "auto"}]})
         source = write_json(self.root / "ten.json", {"title": "열 컷 통합 검증", "cuts": cuts})
         formatted = self.root / "chunks"

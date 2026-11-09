@@ -35,7 +35,7 @@ inventory and retained dependency notices.
 No font binary is included. Users supply a font with appropriate permissions.
 If a distributor later includes a font, the font's license and notices must be
 reviewed and preserved separately. The software MIT license does not relicense
-a font, checkpoint, LoRA, ControlNet resource or other third-party asset.
+a font, image, model resource or other third-party asset.
 
 ## External services and user content
 

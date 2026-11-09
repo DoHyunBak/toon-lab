@@ -27,13 +27,13 @@ PRIVATE_FILES = {"agents.md", "claude.md", "skills-lock.json",
                  "tools/prepare_pui_season.py", "tools/build_pui_discovery.py",
                  "tests/test_legal_closure_facts.py", "tests/test_research_expression_storage.py",
                  "tests/test_discovery_handoff.py"}
-PUBLIC_FIXTURES = {"workspace/01_scripts/example.json", "workspace/workflow_api.example.json"}
+PUBLIC_FIXTURES = {"workspace/01_scripts/example.json"}
 SHOWCASE_PNG = "docs/public/examples/webtoon-preview.png"
 SHOWCASE_SHA256 = "87914023d3b63fd0ac55101ddb3501c9cc559de2de1a1c462ee4600a054d58ae"
 TEXT_SUFFIXES = {".py", ".ps1", ".md", ".txt", ".json", ".yml", ".yaml", ".toml", ".ini", ".cfg"}
 TEXT_NAMES = {"LICENSE", "NOTICE", ".gitignore", ".gitattributes", ".env.example"}
 PUBLIC_ROOTS = {"src", "tests", "tools", "docs", ".github"}
-PUBLIC_ROOT_FILES = {"readme.md", "license", "notice", "third_party_notices.md", "security.md",
+PUBLIC_ROOT_FILES = {"readme.md", "readme.ko.md", "readme.ja.md", "license", "notice", "third_party_notices.md", "security.md",
                      "contributing.md", "open_source_release.md", "requirements.txt", "factory.ps1", "compress_png.py",
                      "pyproject.toml", "pytest.ini", ".gitignore", ".gitattributes", ".env.example", "agents.md"}
 PUBLIC_AGENT_GUIDE_SOURCE = "docs/public/REPO_AGENT_GUIDE.md"

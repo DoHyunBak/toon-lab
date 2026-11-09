@@ -10,15 +10,12 @@ No upstream scripts were executed. Application modules do not import vendor code
 
 Adaptation map:
 
-- `src/comfy_client.py`: adapted the core checkpoint → character LoRA chain → CLIP conditioning → sampler → VAE decode → SaveImage graph from `comfy_workflow.py::build_workflow`; adapted urllib queue/history/upload/view operations from `generate.py::ComfyClient`. Added guide ControlNet chains, strict base-template injection, preflight, explicit output selection and failure handling. Omitted LLM/story generation, studio UI, cloud/GPU orchestration, hires/detailer and custom-node pipelines.
 - `src/bubble_renderer.py`: adapted `bubbles.py` balloon/tail/shout/cloud/caption geometry and measured wrapping approach. Replaced space-only wrapping and silent fallback with Unicode-aware fitting, Korean font verification, normalized coordinates and collision errors.
 - `src/webtoon_stitcher.py`: adapted `assemble_pages.py::assemble_page` Pillow canvas/paste/save sequence. Replaced fixed-height grid, center crop and missing-panel placeholder with aspect-preserving ordered cuts, whitespace and gutter-only lossless slicing.
 - `src/script_formatter.py`: independently written TXT/JSON adapter, referencing upstream parser structure and the external tool's published native grammar. It does not copy upstream automatic story generation or infer new story content.
 
 Upstream source links pinned to the inspected version:
 
-- [comfy_workflow.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/comfy_workflow.py)
-- [generate.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/generate.py)
 - [bubbles.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/bubbles.py)
 - [assemble_pages.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/assemble_pages.py)
 
@@ -74,6 +71,3 @@ software and user-supplied materials or external services.
   rights or a model-weight license. The optional TypeSafe agent skill has its
   own MIT notice and is not bundled in this source-only release. Its license
   does not replace the [TypeSafe customer agreement](https://typesafe.ai/legal/mca).
-- ComfyUI checkpoints, LoRAs, ControlNet models and other optional resources are
-  not bundled. Check the conditions of the particular resources you supply;
-  this project's license does not grant rights to them.

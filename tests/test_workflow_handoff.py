@@ -17,7 +17,7 @@ def payload_paths():
 
 
 class WorkflowHandoffTests(unittest.TestCase):
-    def test_three_skills_have_complete_scalar_frontmatter_and_no_unfinished_fields(self):
+    def test_skills_have_complete_scalar_frontmatter_and_no_unfinished_fields(self):
         from tools.install_workflow_skills import SKILL_NAMES
         for name in SKILL_NAMES:
             with self.subTest(skill=name):

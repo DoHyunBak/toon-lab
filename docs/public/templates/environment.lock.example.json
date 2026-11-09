@@ -2,15 +2,33 @@
   "schema_version": 1,
   "status": "unconfigured_not_tested",
   "verified_at": null,
-  "target": {"gpu_family": "NVIDIA GeForce RTX 5060", "os_assumption": "Windows", "actual_device_and_vram": "unverified"},
-  "hardware": {"os": null, "gpu": null, "vram_bytes": null, "driver": null},
-  "comfyui": {"source_url": "https://github.com/Comfy-Org/ComfyUI", "commit_or_build": null, "python": null, "torch": null, "start_command": null},
-  "custom_nodes": [],
-  "custom_node_entry_fields": ["source_url", "registry_id", "version_or_commit", "license_url", "license_checked_at", "required_models", "installed_python", "object_info_checked"],
-  "models": [],
-  "model_entry_fields": ["name", "family", "provider_url", "revision", "relative_model_path", "bytes", "sha256", "license_url", "license_checked_at", "permitted_uses", "required_notices", "holds"],
+  "runtime": {
+    "os": null,
+    "python": null,
+    "pillow": null
+  },
+  "image_generation": {
+    "executor": "assistant_tool",
+    "tool": null,
+    "model_if_disclosed": null,
+    "input_mode": null,
+    "external_recipients": [],
+    "authorized_input_evidence": []
+  },
   "fonts": [],
-  "workflow": {"ui_json_sha256": null, "api_json_sha256": null, "input_mode": null, "external_recipients": [], "reviewed_nodes": [], "authorized_input_evidence": []},
-  "tests": {"server_preflight": "not_run", "one_cut_gpu_generation": "not_run", "style_comparison": "not_reviewed"},
-  "limits": ["Lock records identity and conditions; it is not legal clearance or a visual quality guarantee."]
+  "font_entry_fields": [
+    "name",
+    "version",
+    "sha256",
+    "license_url",
+    "license_checked_at"
+  ],
+  "tests": {
+    "local_assembly": "not_run",
+    "one_cut_generation": "not_run",
+    "style_comparison": "not_reviewed"
+  },
+  "limits": [
+    "Lock records identity and conditions; it is not legal clearance or a visual quality guarantee."
+  ]
 }

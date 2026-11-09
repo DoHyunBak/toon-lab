@@ -58,13 +58,10 @@ def _generation(root, job, cut_id):
         imagegen['referenced_image_paths'] = [r['path'] for r in record['reference_images']]
     return {"action": "generate", "cut_id": cut_id, "replace": bool(record["imported"]),
             "generation_input_mode": job['generation_input_mode'], "generation_policy_version": job['generation_policy_version'],
-            "comfyui": {"prompt": prompt, "supported_factory_import": not owned,
-                        "instruction": ("The old owned-reference catalog does not authorize ComfyUI input use; prepare a separately reviewed route."
-                                        if owned else "Use this scene brief to author the actual API graph. Record actual graph prompts and the completed runner receipt; import with --provider comfyui --generation-record RECEIPT --prompt-file ACTUAL --no-visual-references.")},
             "imagegen": imagegen, "used_reference_ids": record['visual_reference_ids'] if owned else [],
             "instruction": ('Call built-in imagegen with exactly this prompt and the one listed own-episode1 path; '
                             'omit num_last_images_to_include. Save the EXACT prompt and declare the listed actual --used-reference ID on import.' if owned else
-                            "Use the agent's available image-generation tool with this text-only prompt and no image inputs. Save the actual tool, prompt and image locally; import with --provider imagegen --prompt-file FILE --no-visual-references. For ComfyUI follow its separate receipt workflow.")}
+                            "Use the agent's available image-generation tool with this text-only prompt and no image inputs. Save the actual tool, prompt and image locally; import with --provider imagegen --prompt-file FILE --no-visual-references.")}
 
 
 def _provenance(job, root):
@@ -82,14 +79,8 @@ def _provenance(job, root):
                 missing.append(f"{cut['id']}: preserved original hash differs")
         except (OSError, ValueError, KeyError):
             missing.append(f"{cut['id']}: preserved original missing")
-        if item.get("provider") == "comfyui":
-            try:
-                evidence = item["generation_record"]
-                for name in ("receipt", "workflow"):
-                    if _sha(_owned(root, evidence[name]["path"])) != evidence[name]["sha256"]:
-                        raise ValueError("Changed ComfyUI evidence")
-            except (OSError, ValueError, KeyError, TypeError):
-                missing.append(f"{cut['id']}: ComfyUI receipt/workflow missing or changed")
+        if item.get("provider") != "imagegen":
+            missing.append(f"{cut['id']}: unsupported generation provider; preserve the original job and use a supported import route")
     return missing
 
 

@@ -53,7 +53,7 @@ class WorkflowSkillBootstrapTests(unittest.TestCase):
         self.assertFalse((self.root / ".agents").exists())
         self.assertEqual(self.snapshot(), before)
 
-    def test_install_copies_only_three_known_files(self):
+    def test_install_copies_only_known_files(self):
         unrelated = self.root / "docs/public/skills/unrelated/SKILL.md"
         unrelated.parent.mkdir()
         unrelated.write_text("do not install")
@@ -64,7 +64,7 @@ class WorkflowSkillBootstrapTests(unittest.TestCase):
         for name in SKILL_NAMES:
             self.assertEqual(self.destination(name).read_bytes(), self.payloads[name])
         installed = list((self.root / ".agents").rglob("*"))
-        self.assertEqual(sum(path.is_file() for path in installed), 3)
+        self.assertEqual(sum(path.is_file() for path in installed), len(SKILL_NAMES))
         self.assertFalse((self.root / ".agents/skills/unrelated").exists())
 
     def test_identical_install_is_noop_and_preserves_unrelated_destination_files(self):

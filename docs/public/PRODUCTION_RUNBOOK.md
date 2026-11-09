@@ -16,7 +16,7 @@
 [편집·식자 제작 기준](EDITORIAL_LETTERING_PLAYBOOK.md)을 따른다. 승인 사례의 판단을
 현재 원고와 원화에 적용하고, 기존 회차 좌표를 복사해 품질 승인으로 취급하지 않는다.
 
-설치와 한 컷 GPU 시험은 [ComfyUI 인계](COMFYUI_HANDOFF.md), 원고·구도 판단은
+환경 준비와 한 컷 생성은 [에이전트 이미지 제작 절차](AGENT_IMAGE_WORKFLOW.md), 원고·구도 판단은
 [작가 공정](AUTHORING_WORKFLOW.md), 오류의 원인/해결은 [트러블슈팅](TROUBLESHOOTING.md)을
 먼저 읽는다. 이 문서는 실제 구현과 수동 공정을 구분해 연결한다. 예제의 경로는
 저장소 루트 기준이고, 작성된 작품별 입력과 기록은 Git에서 제외한다.
@@ -94,23 +94,19 @@ python tools/compile_production_batch.py --episode workspace/local/jobs/episode_
 
 ## 3. 생성·중단 재개·수정 이력
 
-현재 ComfyUI factory 반입은 core text-only 노드만 허용한다. native runner의 임의
-그래프 지원은 모든 그래프가 factory의 입력 정책에 맞는다는 뜻이 아니다. imagegen
-자체 원화 참조 카탈로그는 ComfyUI 참조 허용으로 이관되지 않았다. 해당 경로는 별도
-검토·구현이 필요하며 이것은 프롬프트로 해제할 수 있는 제한이 아니다.
-
-모든 장면의 실제 graph/prompt/model/seed/입출력과 receipt를 보존한다. 제출은 새
-runner 디렉터리에서 한 번 하고, 기록된 prompt_id가 있으면 `--resume`으로 이어간다.
-`submission_unknown`은 자동 재제출하지 않는다. API JSON과 UI JSON을 구분한다.
+에이전트에 연결된 이미지 도구로 글자 없는 원화를 만든다. 컷마다 실제 도구와 모델
+(제공되는 경우), 전달한 프롬프트, 허용된 입력과 생성 파일을 보존한다. 중단되면
+결과 파일과 실행 기록을 먼저 확인하고, 이미 완료된 컷을 중복 생성하지 않는다.
 한 컷의 작화·구도·소품을 직접 확인한 뒤 연결된 소수 컷과 회차로 확대한다.
 
 ```powershell
-python -m src.factory import workspace/local/jobs/episode_v1 cut_001 workspace/local/cut001_run_v1/image.png --provider comfyui --generation-record workspace/local/cut001_run_v1/receipt.json --prompt-file workspace/local/cut001_actual_prompt.txt --no-visual-references
+python -m src.factory import workspace/local/jobs/episode_v1 cut_001 workspace/local/cut001.png --prompt-file workspace/local/cut001_actual_prompt.txt --no-visual-references
 ```
 
 교체는 같은 import에 `--replace`를 명시한다. 원본과 과거 검수는 history로 보존되고
 현재 조립/검수는 다시 필요해진다. 별도로 만든 후보는 반입되기 전까지 current job이
-아니다. receipt는 로컬 해시 결합이며 제공자 서명·입력 권한·작품 승인은 아니다.
+아니다. `provider=imagegen`은 에이전트 이미지 도구 경로를 나타내는 기록이며,
+실제 서비스의 서명·입력 권한·작품 승인을 뜻하지 않는다.
 
 ### 같은 실패를 반복하지 않는 기록
 
@@ -120,7 +116,7 @@ python -m src.factory import workspace/local/jobs/episode_v1 cut_001 workspace/l
 `replace_correction`과 batch 컴파일러의 역할을 구분한다.
 
 `repeated_failure`는 장면별 attempt의 `REJECTION.json`을 읽어 같은 kind의 연속
-두 실패를 판별한다. **독립 runner가 거절 기록을 자동 생성하거나 자동으로 이 함수를
+두 실패를 판별한다. **이미지 도구가 거절 기록을 자동 생성하거나 자동으로 이 함수를
 호출하지는 않는다.** 현재 공개본에는 해당 기록 전체를 관리하는 범용 rejection CLI가
 없다. 호출 에이전트가 실제 거절 기록을 작성하고 함수 결과를 확인하는 수동 연결이다.
 없는 자동화가 있다고 보고하지 않는다.
@@ -194,7 +190,7 @@ python -m src.factory next workspace/local/jobs/episode_v1
 - 대상 버전, 입력 모드, 최종 master/분할/ZIP/manifest의 해시.
 - 실제 사용 자료와 생성 입력·관찰 참고·QA 비교·편집 재료의 역할 구분.
 - 자료/행위별 출처·조건·허용 범위·수신자·조건 이행·미확인.
-- 원고 → 실제 prompt/graph/model/receipt → 원본 → 편집·식자·합성 → 전달본의 연결.
+- 원고 → 실제 도구/prompt/model/생성 기록 → 원본 → 편집·식자·합성 → 전달본의 연결.
 - 실제 검사·수정·관찰·사람 승인·게시 결정과 각각의 보류 사항.
 - 사후 정리한 사실은 backfill 표시, 알려지지 않은 seed/모델/시간은 unknown 표시.
 
@@ -225,7 +221,7 @@ Google Drive에는 허용된 전체 원본과 증빙을 지정 비공개 폴더�
 
 ## 7. 속도 개선의 측정
 
-준비, 모델 큐 대기, GPU 생성, 실제 검수, 수정, 조립, Drive 반입과 원본 검증을
+준비, 이미지 도구 대기, 원화 생성, 실제 검수, 수정, 조립, Drive 반입과 원본 검증을
 별도 시각/기간으로 기록한다. first-pass 통과율·재작업률·최종 완료 컷당 시간과 함께
 비교한다. 지시문 컴파일 시간이나 호출 수를 전체 제작 속도로 바꾸지 않는다.
 시작·완료·재시도는 `templates/timing_events.example.json` 형식을 사용할 수 있다.

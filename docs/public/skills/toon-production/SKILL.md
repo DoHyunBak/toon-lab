@@ -1,14 +1,13 @@
 ---
 name: toon-production
-description: Produce or revise a toon_lab episode using an agent image tool or ComfyUI, with scene planning, lettering, layout, visual review and provenance.
+description: Produce or revise a toon_lab episode using an agent image tool and local Python assembly, with scene planning, lettering, layout, visual review and provenance.
 ---
 
 # 원고에서 검토 전달본까지
 
 이미지 생성 도구가 연결된 에이전트는 `docs/public/AGENT_IMAGE_WORKFLOW.md`를
-따라 한 컷부터 제작한다. 로컬 ComfyUI가 선택된 작업은
-`docs/public/PRODUCTION_RUNBOOK.md`를 읽고 해당 절차를 수행한다. 창작을 요청받으면
-아이디어로 짧은 원고를 쓰고, 샘플 요청에는 범용 예제를 사용한다.
+따라 한 컷부터 제작한다. 식자·조립·검수는 `docs/public/PRODUCTION_RUNBOOK.md`를
+따른다. 창작 요청에는 짧은 원고를 쓰고, 샘플 요청에는 범용 예제를 사용한다.
 
 - 시작 전에 current job/state, 원고 ID·순서·사건과 유효한 해시, 열린 결함, 실제 승인
   범위를 확인한다. 과거 완료본/거절본을 새로운 승인본으로 제시하지 않는다.
@@ -20,10 +19,9 @@ description: Produce or revise a toon_lab episode using an agent image tool or C
 - 장면 목적·시점·인물 위치·시선·소품 상태·보호 대상·대사 공간을 간단한 선 또는
   텍스트로 계획한다. 상세 밑그림 반복 생성은 필수가 아니다. 관찰용 도식 이미지를
   생성 입력으로 자동 첨부하지 않는다. 작가의 판단 질문은 `AUTHORING_WORKFLOW.md`에 있다.
-- 실제 입력 모드와 모델/노드/전송 범위의 조건을 확인한다. standalone native runner와
-  factory의 제한된 core text-only 반입은 다른 계약이다. 자체 원화의 예전 imagegen
-  허용만으로 ComfyUI 참조를 사용하지 않는다. 구현이 없는 경로는 게이트를 우회하지 않는다.
-- 원화는 대사를 제외하고 생성한다. 실제 그래프/프롬프트/모델/입출력 해시와 receipt를
+- 실제 입력 모드와 이미지 도구·전송 범위의 조건을 확인한다. 자체 원화 참조는
+  명시적으로 허용된 파일·해시·도구 범위에서만 사용한다. 검토 게이트를 우회하지 않는다.
+- 원화는 대사를 제외하고 생성한다. 실제 도구/프롬프트/모델/입출력 해시와 제공되는 생성 기록를
   버전별로 남긴다. 먼저 한 컷, 이어 소수 연결 컷의 인물·소품·공간·호흡을 직접 검수한다.
 - B/C를 명시하고 실제 폰트 크기·몸체 실측을 유지한다. 장면 위 실제 빈 공간에는
   `art_anchor`, 얼굴·손·핵심 단서에는 `protected_art_boxes`를 작성한다. 과거 좌표를

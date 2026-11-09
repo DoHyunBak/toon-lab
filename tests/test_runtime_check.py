@@ -45,6 +45,8 @@ class RuntimeCheckTests(unittest.TestCase):
         with patch("src.reference_guidance.load_references") as references:
             result = check_runtime(project_root=self.root)
         self.assertEqual(result["status"], "ready", result)
+        self.assertEqual(result["image_generation"]["provider"], "imagegen")
+        self.assertEqual(result["image_generation"]["executor"], "assistant_tool")
         self.assertNotEqual(result["checks"]["references"]["status"], "blocked")
         references.assert_not_called()
         self.assertEqual(sorted(str(path.relative_to(self.root)) for path in self.root.rglob("*")), before)

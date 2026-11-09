@@ -18,7 +18,6 @@ CLAUDE.md
 workspace/**
 !workspace/**/
 !workspace/01_scripts/example.json
-!workspace/workflow_api.example.json
 RELEASE_MANIFEST.json
 *.safetensors
 *.ckpt
@@ -26,7 +25,6 @@ models/
 assets/
 private/
 local/
-ComfyUI/
 output/
 input/
 *.pt
@@ -36,5 +34,3 @@ input/
 *.onnx
 *.key
 *.png.compression.json
-extra_model_paths.yaml
-extra_models_config.yaml

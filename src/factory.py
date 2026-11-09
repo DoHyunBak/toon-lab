@@ -256,34 +256,15 @@ def prepare_job(episode_path, job_dir, characters_path=None, *, reference_ids=No
     return job
 
 
-def import_cut(job_dir, cut_id, image_path, prompt_file=None, replace=False, *, provider="imagegen", used_reference_ids=None,
-               generation_record=None):
+def import_cut(job_dir, cut_id, image_path, prompt_file=None, replace=False, *, provider="imagegen", used_reference_ids=None):
     """Preserve source bytes and a lossless normalized PNG; retain previous versions."""
     root, job = _load(job_dir)
     validate_generation_job(root, job)
     owned = job['generation_input_mode'] == OWN_MODE
     if used_reference_ids and not owned:
         raise ValueError("Text-only generation cannot declare image references as used")
-    if provider not in {"imagegen", "comfyui"}:
+    if provider != "imagegen":
         raise ValueError("Unsupported generation provider")
-    receipt = workflow = None
-    if provider == "comfyui":
-        if owned:
-            raise ValueError("The existing own-reference catalog authorizes imagegen only; use a separately reviewed ComfyUI input route")
-        if generation_record is None or prompt_file is None or used_reference_ids != []:
-            raise ValueError("ComfyUI import requires --generation-record, actual --prompt-file and --no-visual-references")
-        from .comfy_runner import validate_completed_output
-        receipt, workflow = validate_completed_output(generation_record, image_path)
-        # Only these audited core text-to-image nodes can enter a text_only job.
-        # Arbitrary native graphs remain usable through the independent runner,
-        # but a declaration alone cannot establish their image-input behavior.
-        text_only_nodes = {"CheckpointLoaderSimple", "CLIPTextEncode", "EmptyLatentImage",
-                           "KSampler", "VAEDecode", "SaveImage", "LoraLoader"}
-        graph = _read(workflow)
-        if any(node.get("class_type") not in text_only_nodes for node in graph.values()):
-            raise ValueError("ComfyUI text_only factory import accepts audited core text-to-image nodes only; unknown/image-input graphs need a separately reviewed route")
-    elif generation_record is not None:
-        raise ValueError("generation_record is only supported for provider=comfyui")
     record = next((cut for cut in job["cuts"] if cut["id"] == cut_id), None)
     if record is None:
         raise ValueError(f"Unknown cut ID: {cut_id}")
@@ -320,24 +301,8 @@ def import_cut(job_dir, cut_id, image_path, prompt_file=None, replace=False, *, 
     target, original = _owned(root, relative), _owned(root, original_relative)
     if target.exists() or original.exists():
         raise FileExistsError("Import destinations already exist; existing art is preserved")
-    generation_evidence = None
-    if receipt is not None:
-        evidence = _owned(root, f"raw/generation/{stem}")
-        evidence.mkdir(parents=True, exist_ok=False)
-        saved_receipt, saved_workflow = evidence / "receipt.json", evidence / "workflow_api.json"
-        shutil.copyfile(generation_record, saved_receipt)
-        shutil.copyfile(workflow, saved_workflow)
-        generation_evidence = {
-            "receipt": {"path": saved_receipt.relative_to(root).as_posix(), "sha256": _sha(saved_receipt)},
-            "workflow": {"path": saved_workflow.relative_to(root).as_posix(), "sha256": _sha(saved_workflow)},
-            "prompt_id": receipt["prompt_id"],
-            "verification": "local_receipt_and_bytes_bound_not_service_attested"}
     original.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(source, original)
-    if receipt is not None and (_sha(original) != receipt["output"]["sha256"]
-                                or _sha(saved_workflow) != receipt["workflow"]["sha256"]
-                                or _read(saved_receipt) != receipt):
-        raise ValueError("ComfyUI inputs changed during import; preserve evidence and retry in a fresh job")
     normalized.save(target, format="PNG")
     with Image.open(target) as saved:
         saved.verify()
@@ -350,8 +315,6 @@ def import_cut(job_dir, cut_id, image_path, prompt_file=None, replace=False, *, 
                 "prompt_verification": "provided" if prompt else "not_recorded",
                 "imported_at": datetime.now(timezone.utc).isoformat(),
                 "generation_input_mode": job['generation_input_mode'], "generation_policy_version": job['generation_policy_version']}
-    if generation_evidence is not None:
-        imported["generation_record"] = generation_evidence
     if record["imported"]:
         record["history"].append({**record["imported"], "visual_review": previous_review})
     record["imported"] = imported
@@ -476,8 +439,7 @@ def main(argv=None):
     importer.add_argument("cut_id")
     importer.add_argument("image", type=Path)
     importer.add_argument("--prompt-file", type=Path)
-    importer.add_argument("--provider", choices=["imagegen", "comfyui"], default="imagegen")
-    importer.add_argument("--generation-record", type=Path, help="completed ComfyUI runner receipt bound to exact source bytes")
+    importer.add_argument("--provider", choices=["imagegen"], default="imagegen")
     importer.add_argument("--replace", action="store_true")
     usage = importer.add_mutually_exclusive_group()
     usage.add_argument("--used-reference", action="append", help="actually supplied visual reference ID (operator declaration)")
@@ -532,8 +494,7 @@ def main(argv=None):
             print("에이전트의 이미지 생성 도구로 원화를 만든 후 import 합니다. 다음 단계는 next로 확인하세요.")
         elif args.command == "import":
             result = import_cut(args.job, args.cut_id, args.image, args.prompt_file, args.replace, provider=args.provider,
-                                used_reference_ids=[] if args.no_visual_references else args.used_reference,
-                                generation_record=args.generation_record)
+                                used_reference_ids=[] if args.no_visual_references else args.used_reference)
             print(f"{args.cut_id}: 등록 {result['size'][0]}×{result['size'][1]} → {result['image']}")
         elif args.command == "build":
             print(build_job(args.job, args.output_dir, overwrite=args.overwrite, font_path=args.font,

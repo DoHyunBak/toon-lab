@@ -33,14 +33,14 @@ file is safe to publish merely because its name ends in `.example`.
 
 The root `AGENTS.md` is remapped only from the independently authored
 `docs/public/REPO_AGENT_GUIDE.md`. The production workspace's original root
-instructions remain blocked as a source. The three workflow skills are delivered
+instructions remain blocked as a source. The two workflow skills are delivered
 as reviewed Markdown under `docs/public/skills/`; their optional installer copies
-only those three files to ignored, repo-local `.agents/skills/`. It does not export
+only those two files to ignored, repo-local `.agents/skills/`. It does not export
 the private workspace's skill catalog, touch user-global settings, or replace
 conflicting installed instructions. New skills need their own exact manifest entry.
 
-The only `workspace/` files in this release are two explicitly reviewed generic
-JSON examples required by the offline demo/protocol tests. The README showcases
+The only `workspace/` file in this release is one explicitly reviewed generic
+JSON example required by the offline demo and assembly tests. The README showcases
 one reviewed PNG, pinned to its SHA-256 in the release validator. Reference images,
 other story assets, research and production/audit records stay private. Production-specific
 scripts and private tests are also omitted even though their extensions are code.
@@ -69,7 +69,7 @@ model services. Korean lettering tests require a suitable local font.
 The default `doctor` checks local text-only prerequisites without reading an
 image-reference catalog. An explicitly requested reference-catalog check verifies
 its actual originals. Never copy a private library merely to obtain a ready result.
-Doctor does not contact ComfyUI or execute a GPU graph; test those separately.
+Doctor checks the local assembly environment; verify the agent image tool separately.
 
 ## GitHub publication boundary
 

@@ -9,7 +9,7 @@ from unittest.mock import patch
 from PIL import Image
 
 from src.factory import prepare_job, import_cut, build_job, job_status
-from src.operations import next_action, submit_review
+from src.operations import _provenance, next_action, submit_review
 
 
 def save(path, value):
@@ -56,6 +56,19 @@ class OperationTests(unittest.TestCase):
         prompt.write_text(action["imagegen"]["prompt"], encoding="utf-8")
         return import_cut(self.job, identifier, self.art, prompt, replace,
                           used_reference_ids=action["used_reference_ids"])
+
+    def test_old_provider_records_are_preserved_and_never_accepted_as_ready(self):
+        self.import_current('cut_a')
+        self.import_current('cut_b')
+        path = self.job / 'job.json'
+        job = json.loads(path.read_text(encoding='utf-8'))
+        job['cuts'][0]['imported']['provider'] = 'retired-backend'
+        save(path, job)
+        before = path.read_bytes()
+        issues = _provenance(job, self.job)
+        self.assertTrue(any('unsupported generation provider' in issue for issue in issues))
+        self.assertEqual(next_action(self.job)['action'], 'record_provenance')
+        self.assertEqual(path.read_bytes(), before)
 
     def test_replan_blocks_both_explicit_and_automatic_generation(self):
         save(self.job/'generation_evidence/cut_a.replan.json',
