@@ -1,6 +1,8 @@
 # toon_lab
 
-원고와 컷 이미지를 세로 스크롤 웹툰으로 조립하는 로컬 제작 도구입니다. 이미지 생성 도구를 가진 AI 에이전트는 클론한 폴더에서 원고 정리부터 컷 생성, 한글 식자, 세로 PNG 조립까지 진행할 수 있습니다.
+이미지를 생성할 수 있는 생성형 AI와 Python으로 세로 스크롤 웹툰을 만드는 제작 도구입니다. GPT 계열의 이미지 생성 도구 등으로 컷 원화를 만들고, 로컬 Python 코드로 한글 식자·말풍선 배치·세로 PNG 조립을 처리합니다. 이미지 생성·보기와 로컬 파일 저장·명령 실행이 가능한 AI 에이전트가 이 과정을 진행합니다.
+
+기본 제작 경로에는 ComfyUI나 로컬 GPU가 필요하지 않습니다. 이미지 생성은 에이전트에 연결된 도구가 담당하며, 이 저장소의 Python 코드가 자체적으로 이미지 생성 모델을 실행하는 것은 아닙니다.
 
 ## 첫 웹툰 만들기
 
@@ -84,37 +86,44 @@ Python이나 폰트가 인식되지 않으면 가상 환경의 Python으로 `-m 
 ## 제작 흐름
 
 1. 원고를 장면별 텍스트 브리프로 정리하고 사용할 이미지와 입력 권한을 확인합니다.
-2. 원화를 준비해 등록하고 말풍선, 효과음, 컷 사이 여백을 조정합니다.
-3. 세로 PNG를 조립하고 모바일 폭에서 흐름과 가독성을 확인합니다.
+2. 에이전트에 연결된 생성형 AI 이미지 도구로 글자 없는 컷 원화를 생성하고 결과를 확인합니다.
+3. 생성한 원화를 등록한 뒤 Python과 Pillow로 한글 대사·말풍선·효과음을 넣고 컷 크기와 여백을 조정합니다.
+4. 세로 PNG를 조립하고 모바일 폭에서 흐름과 가독성을 확인합니다.
 
 [제작 절차](docs/public/PRODUCTION_RUNBOOK.md)와 [식자·편집 가이드](docs/public/EDITORIAL_LETTERING_PLAYBOOK.md)에 작업별 명령과 예제가 있습니다. 로컬 GPU 제작을 선택한 경우 [ComfyUI 설치·실행 안내](docs/public/COMFYUI_HANDOFF.md)를 따르세요.
 
-## 참고한 프로젝트와 자료
+## 사용하는 도구와 코드 출처
 
-### 코드 출처와 사용하는 도구
+### 기본 제작 도구
 
-- **manga-studio**의 ComfyUI 그래프·HTTP 연동, 말풍선 기하, Pillow 조립 코드를 프로젝트에 맞게 수정했습니다. 원고 파서의 구조와 문법도 참고했습니다. [upstream 저장소](https://github.com/ahmet360/manga-studio) · [사용한 커밋](https://github.com/ahmet360/manga-studio/tree/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4) · [변경 범위와 MIT 고지](THIRD_PARTY_NOTICES.md)
-- **Pillow**는 이미지 처리·식자·조립에 사용합니다. **Pretendard**는 한글 식자에 쓰는 오픈 라이선스 글꼴입니다. [Pillow](https://github.com/python-pillow/Pillow) · [Pretendard](https://github.com/orioncactus/pretendard)
-- **ComfyUI**는 선택형 로컬 이미지 생성 환경입니다. **TypeSafe/Jev**는 선택형 검토 연동이며, 연동 검토에 TypeSafe 공식 스킬과 문서를 참고했습니다. [ComfyUI](https://github.com/Comfy-Org/ComfyUI) · [TypeSafe 문서](https://docs.typesafe.ai/) · [TypeSafe 스킬](https://github.com/typesafe-ai/skills)
+- **생성형 AI 이미지 도구**: GPT 계열의 이미지 생성 도구 등, 현재 에이전트에서 사용할 수 있는 도구로 컷 원화를 만듭니다. 사용할 도구에서 이미지 생성과 결과 파일 저장이 가능해야 합니다. 특정 서비스의 계정이나 API 연동은 이 저장소에 포함되지 않습니다.
+- **Python · [Pillow](https://github.com/python-pillow/Pillow)**: 원고와 컷 파일을 처리하고, 생성된 원화에 말풍선·한글 대사를 올린 뒤 세로 이미지로 조립합니다. Python 패키지 의존성은 [requirements.txt](requirements.txt)에 있습니다. [Pillow 라이선스 안내](https://pillow.readthedocs.io/en/stable/about.html#license)
+- **[Pretendard](https://github.com/orioncactus/pretendard)**: 한글 식자에 사용하는 SIL OFL 글꼴입니다. 기본 Medium(500), 강조 Bold(700)을 사용합니다. [원본 라이선스](https://github.com/orioncactus/pretendard/blob/v1.3.9/LICENSE) · [글꼴 준비와 라이선스 안내](docs/public/FONTS.md)
 
-### 제작 흐름을 조사한 저장소
+실제 작업 순서와 명령은 [에이전트 이미지 제작 절차](docs/public/AGENT_IMAGE_WORKFLOW.md)를 따릅니다.
 
-원고와 컷의 연결은 **manga-generator**, 실제 프롬프트 기록과 부분 실행은 **baoyu-skills**, 장면의 인과는 **community-webtoon-agent-kit**, 원화와 식자의 분리는 **agent-comic-kit**에서 참고했습니다. **mangaharness**의 비파괴 편집, **webtoon-harness**의 연속성 관리, **ARIS-Movie-Director**의 연출 의도와 결과 관찰을 구분하는 방식도 검토했습니다.
+### 코드 출처
 
-<details>
-<summary>조사한 저장소 전체 보기</summary>
+**원본 프로젝트: [ahmet360/manga-studio](https://github.com/ahmet360/manga-studio) · 저작권자: ahmet360 · 라이선스: MIT**
 
-- **이미지 생성·캐릭터 일관성** · [HVision-NKU/StoryDiffusion](https://github.com/HVision-NKU/StoryDiffusion) · [jianzongwu/DiffSensei](https://github.com/jianzongwu/DiffSensei) · [TencentARC/PhotoMaker](https://github.com/TencentARC/PhotoMaker) · [Acly/krita-ai-diffusion](https://github.com/Acly/krita-ai-diffusion) · [lllyasviel/Fooocus](https://github.com/lllyasviel/Fooocus) · [invoke-ai/InvokeAI](https://github.com/invoke-ai/InvokeAI) · [FireRedTeam/StoryMaker](https://github.com/FireRedTeam/StoryMaker) · [Comfy-Org/ComfyUI](https://github.com/Comfy-Org/ComfyUI) · [wswszhys/ComfyUI_StoryDiffusion](https://github.com/wswszhys/ComfyUI_StoryDiffusion) · [smthemex/ComfyUI_StoryDiffusion](https://github.com/smthemex/ComfyUI_StoryDiffusion)
-- **에이전트·제작 워크플로** · [revfactory/webtoon-harness](https://github.com/revfactory/webtoon-harness) · [Q0916/community-webtoon-agent-kit](https://github.com/Q0916/community-webtoon-agent-kit) · [Saeyeon-developer/agent-comic-kit](https://github.com/Saeyeon-developer/agent-comic-kit) · [BotTony329/mangaharness](https://github.com/BotTony329/mangaharness) · [jimliu/baoyu-skills](https://github.com/jimliu/baoyu-skills) · [wanshuiyin/ARIS-Movie-Director](https://github.com/wanshuiyin/ARIS-Movie-Director) · [SyMind/codex-comic](https://github.com/SyMind/codex-comic) · [bcefghj/comic-guide-skill](https://github.com/bcefghj/comic-guide-skill) · [stockedge/manga-generator](https://github.com/stockedge/manga-generator) · [RemiPelloux/agent-mangaka-forge](https://github.com/RemiPelloux/agent-mangaka-forge) · [cbthuodot/novel-comic-adapter](https://github.com/cbthuodot/novel-comic-adapter) · [Shanzoon/comic-assets-skill](https://github.com/Shanzoon/comic-assets-skill) · [lhfer/codex-novel-to-comic-studio](https://github.com/lhfer/codex-novel-to-comic-studio) · [onebluecloud/book-to-comic](https://github.com/onebluecloud/book-to-comic) · [ahmet360/manga-studio](https://github.com/ahmet360/manga-studio)
-- **만화 생성·편집·분할** · [jbilcke-hf/ai-comic-factory](https://github.com/jbilcke-hf/ai-comic-factory) · [GA10d/AI-Manga-AI-Comics](https://github.com/GA10d/AI-Manga-AI-Comics) · [alexisbcz/palmframe](https://github.com/alexisbcz/palmframe) · [phaethix/inkstone](https://github.com/phaethix/inkstone) · [Aschen/comics_generator](https://github.com/Aschen/comics_generator) · [esmail-mkh/PhotoSlicer](https://github.com/esmail-mkh/PhotoSlicer) · [filiksyos/ai-comics-generator](https://github.com/filiksyos/ai-comics-generator) · [UllrAI/CineGen-ShortDrama](https://github.com/UllrAI/CineGen-ShortDrama) · [LingyiChen-AI/AIComicBuilder](https://github.com/LingyiChen-AI/AIComicBuilder) · [LlamaGenAI/webtoon](https://github.com/LlamaGenAI/webtoon) · [GL-Wen/huiman-ark](https://github.com/GL-Wen/huiman-ark) · [HBAI-Ltd/Toonflow-app](https://github.com/HBAI-Ltd/Toonflow-app) · [Anning01/novelvids](https://github.com/Anning01/novelvids) · [jays0606/mangstoon_ai](https://github.com/jays0606/mangstoon_ai) · [AmanAutomates/ManhwaGen](https://github.com/AmanAutomates/ManhwaGen) · [akiratrann/manhwa-studio](https://github.com/akiratrann/manhwa-studio)
+**사용한 커밋: [`2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4`](https://github.com/ahmet360/manga-studio/tree/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4)**
 
-</details>
+| 이 프로젝트의 파일 | 원본 또는 참고 출처 | 수정·참고 범위 |
+| :--- | :--- | :--- |
+| [src/bubble_renderer.py](src/bubble_renderer.py) | [manga-studio / bubbles.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/bubbles.py) | 말풍선과 꼬리 기하, 글자 실측·줄바꿈 방식을 가져와 한글 식자와 충돌 검사에 맞게 수정 |
+| [src/webtoon_stitcher.py](src/webtoon_stitcher.py) | [manga-studio / assemble_pages.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/assemble_pages.py) | Pillow 캔버스·붙여넣기·저장 코드를 가져와 원본 비율을 유지하는 세로 조립과 분할로 수정 |
+| [src/comfy_client.py](src/comfy_client.py) | [manga-studio / comfy_workflow.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/comfy_workflow.py), [generate.py](https://github.com/ahmet360/manga-studio/blob/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4/generate.py) | 별도 선택 기능인 ComfyUI 그래프 구성·HTTP 연동 코드를 가져와 수정 |
+| [src/script_formatter.py](src/script_formatter.py) | [manga-studio](https://github.com/ahmet360/manga-studio/tree/2ac3cf4e3d1aaec7dd39ff44498e4e8a186733c4) | 파서 구조와 문법을 참고해 TXT/JSON 어댑터를 별도로 작성 |
 
-### 연출·편집 및 연구 자료
+**원본의 저작권·MIT 고지 전문과 상세 변경 범위는 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)에 보존합니다.** 이 출처 표기는 코드의 유래를 설명하며, 기본 제작 과정에서 manga-studio나 ComfyUI를 실행한다는 뜻은 아닙니다.
 
-- **기획과 장면 구성**에는 Writing Excuses, John August, Jennifer Crusie, The Open University의 창작 가이드와 웹툰 작가 인터뷰를 참고했습니다. [자료별 출처와 적용 방법](docs/public/AUTHORING_WORKFLOW.md)
-- **세로 스크롤 편집과 연재 작화**에는 CELSYS 제작 안내, CLIP STUDIO PAINT 매뉴얼, 연재 작가 노트와 웹툰 연출 연구를 참고했습니다. [CELSYS 제작 안내](https://www.clipstudio.net/how-to-draw/archives/157055) · [웹툰 기능 매뉴얼](https://help.clip-studio.com/en-us/manual_en/540_comic/Webtoons.htm) · [식자·편집 가이드](docs/public/EDITORIAL_LETTERING_PLAYBOOK.md)
-- **웹툰 연구와 만화 레이아웃 조사**에서 확인한 공개 서지·연구 프로젝트입니다. [WRIK](https://github.com/YunHoLeee/WRIK) · [ComiXR](https://github.com/ammarjamal/ComiXR)
+### 별도 선택 기능
+
+저장소에는 **ComfyUI 연동 코드**와 **TypeSafe/Jev 검토 연동 코드**도 있습니다. 기본 이미지 생성·식자·조립 과정에는 필요하지 않습니다. 사용자가 해당 경로를 선택할 때 별도로 환경과 연결을 준비합니다. [ComfyUI 안내](docs/public/COMFYUI_HANDOFF.md) · [검토 연동의 범위](docs/public/LEGAL_QA.md)
+
+### 제작 방식 조사 자료
+
+다른 제작 저장소와 창작·편집 자료를 조사한 내용은 [작가·연출 작업법](docs/public/AUTHORING_WORKFLOW.md)과 [식자·편집 가이드](docs/public/EDITORIAL_LETTERING_PLAYBOOK.md)에 정리했습니다. 이 자료는 기획과 편집 판단을 위한 참고 자료이며, 기본 제작 도구나 설치 의존성 목록이 아닙니다.
 
 ## 공개 범위
 
@@ -124,3 +133,9 @@ Python이나 폰트가 인식되지 않으면 가상 환경의 Python으로 `-m 
 - [보안 정책과 취약점 제보](SECURITY.md)
 - [MIT 라이선스](LICENSE)와 [제3자 고지](THIRD_PARTY_NOTICES.md)
 - [라이선스 적용 범위](docs/public/LICENSE_SCOPE.md)
+
+## 문제 제보 및 조치 방침
+
+출처 표기 누락, 라이선스 위반, 저작권 침해 또는 그 밖의 문제가 있다고 판단되면 [이 저장소의 GitHub Issues](https://github.com/DoHyunBak/toon-lab/issues)로 연락해 주세요. 문제가 되는 파일·내용과 원본 출처, 문제의 근거를 함께 알려주시면 확인에 도움이 됩니다. 보안 취약점이나 비공개 자료가 포함된 제보는 [보안 제보 안내](SECURITY.md)를 따라 주세요.
+
+**문제가 확인되면 즉시 해당 내용의 공개·배포를 중단하고, 출처 보완·수정·삭제 등 필요한 조치를 하겠습니다. 해결이 어렵거나 저장소 유지가 부적절한 경우에는 즉시 저장소를 폐기하겠습니다.**
