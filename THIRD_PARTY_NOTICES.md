@@ -52,8 +52,9 @@ replace the upstream copyright and permission notice above. Retain this file
 when redistributing the adapted modules.
 
 The source-only release does not bundle private manuscripts, story-specific
-production scripts, reference artwork, generated artwork, research or audit
+production scripts, reference artwork, other generated artwork, research or audit
 records, credentials, vendor checkouts, fonts, model weights or a Python runtime.
+The README includes one toon_lab showcase excerpt, outside the software's MIT license.
 See [License scope](docs/public/LICENSE_SCOPE.md) for the boundary between the
 software and user-supplied materials or external services.
 

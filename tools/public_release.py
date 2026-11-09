@@ -28,6 +28,8 @@ PRIVATE_FILES = {"agents.md", "claude.md", "skills-lock.json",
                  "tests/test_legal_closure_facts.py", "tests/test_research_expression_storage.py",
                  "tests/test_discovery_handoff.py"}
 PUBLIC_FIXTURES = {"workspace/01_scripts/example.json", "workspace/workflow_api.example.json"}
+SHOWCASE_PNG = "docs/public/examples/webtoon-preview.png"
+SHOWCASE_SHA256 = "87914023d3b63fd0ac55101ddb3501c9cc559de2de1a1c462ee4600a054d58ae"
 TEXT_SUFFIXES = {".py", ".ps1", ".md", ".txt", ".json", ".yml", ".yaml", ".toml", ".ini", ".cfg"}
 TEXT_NAMES = {"LICENSE", "NOTICE", ".gitignore", ".gitattributes", ".env.example"}
 PUBLIC_ROOTS = {"src", "tests", "tools", "docs", ".github"}
@@ -108,7 +110,7 @@ def _name(value, *, reserved=False, public_agent_guide=False):
     if (len(parts) == 1 and lower not in PUBLIC_ROOT_FILES and lower not in RESERVED
             or len(parts) > 1 and parts[0].casefold() not in PUBLIC_ROOTS and value not in PUBLIC_FIXTURES):
         _fail("unreviewed-namespace", value)
-    if Path(value).suffix.lower() not in TEXT_SUFFIXES and value not in TEXT_NAMES:
+    if Path(value).suffix.lower() not in TEXT_SUFFIXES and value not in TEXT_NAMES and value != SHOWCASE_PNG:
         _fail("nontext-file", value)
     return value
 
@@ -192,6 +194,10 @@ def _known_secrets(root):
 def _scan(data, relative, secrets):
     if len(data) > MAX_FILE_BYTES:
         _fail("file-too-large", relative)
+    if relative == SHOWCASE_PNG:
+        if hashlib.sha256(data).hexdigest() != SHOWCASE_SHA256:
+            _fail("unreviewed-showcase-image", relative)
+        return
     try:
         text = data.decode("utf-8-sig")
     except UnicodeError:

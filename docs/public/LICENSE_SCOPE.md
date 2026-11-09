@@ -11,8 +11,11 @@ operator responsibilities and limits separately from the software license.
 
 ## Materials outside this release
 
+The [webtoon showcase excerpt](examples/webtoon-preview.png) is included for
+demonstration. The software's MIT license does not grant rights to that artwork.
+
 The public release excludes private manuscripts, story and character settings,
-reference images, generated artwork, production-specific scripts and records,
+reference images, other generated artwork, production-specific scripts and records,
 research materials, legal/audit and QA records, `.env` and other credentials,
 vendor checkouts, font binaries, model weights, and runtime environments.
 Private working files are not granted a license merely because they are stored

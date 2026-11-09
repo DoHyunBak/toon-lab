@@ -40,8 +40,9 @@ the private workspace's skill catalog, touch user-global settings, or replace
 conflicting installed instructions. New skills need their own exact manifest entry.
 
 The only `workspace/` files in this release are two explicitly reviewed generic
-JSON examples required by the offline demo/protocol tests. No reference images,
-story assets, research or production/audit records are included. Production-specific
+JSON examples required by the offline demo/protocol tests. The README showcases
+one reviewed PNG, pinned to its SHA-256 in the release validator. Reference images,
+other story assets, research and production/audit records stay private. Production-specific
 scripts and private tests are also omitted even though their extensions are code.
 
 Inspect the archive's exact paths and the exported public README/license/notices.

@@ -56,6 +56,16 @@ class PublicReleaseTests(unittest.TestCase):
         value = {"schema_version": 1, "profile": "source_workspace", "files": entries or self.files}
         write(self.root / "public-release.json", json.dumps(value))
 
+    def test_only_reviewed_showcase_path_and_bytes_are_allowed(self):
+        path = release.SHOWCASE_PNG
+        data = (Path(__file__).resolve().parents[1] / path).read_bytes()
+        self.assertEqual(release._name(path), path)
+        release._scan(data, path, set())
+        with self.assertRaisesRegex(ValueError, "unreviewed-showcase-image"):
+            release._scan(data[:-1], path, set())
+        with self.assertRaisesRegex(ValueError, "nontext-file"):
+            release._name("docs/public/examples/another.png")
+
     def test_windows_device_and_reserved_character_targets_are_rejected(self):
         for target in ("src/CON.py", "docs/NUL.txt", "tools/COM1.py", "src/name?.py"):
             with self.subTest(target=target):
