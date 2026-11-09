@@ -1,0 +1,20 @@
+{
+  "version": "notice-generic-v1",
+  "width": 800,
+  "layout": "formal_compact",
+  "font": "assets/fonts/pretendard/Pretendard-Medium.otf",
+  "font_bold": "assets/fonts/pretendard/Pretendard-Bold.otf",
+  "font_size": 28,
+  "title_size": 34,
+  "title": "AI 제작·권리 보호 안내",
+  "paragraphs": [
+    "이 작품은 원고와 연출 계획을 바탕으로 AI 이미지 생성, 식자·편집 및 검수를 거쳐 제작합니다. 실제 적용한 제작 방식은 작업 기록에 남깁니다.",
+    "입력 자료의 이용 범위와 모델·폰트 등의 조건을 확인하며, 권리 관련 제보가 접수되면 사실관계와 자료를 검토하여 필요한 조치를 진행합니다."
+  ],
+  "report_channel": null,
+  "report_channel_label": "접수처 미정",
+  "report_sentence": "권리 관련 제보는 고객센터에 문의해 주세요.",
+  "responsibility_note": "이 고지는 무침해 또는 법적 면책을 보증하지 않습니다.",
+  "draft_label": "내부 검토용 · 실제 접수처 및 고지 내용 확인 전 공개 보류",
+  "font_license": "assets/fonts/pretendard/OFL.txt"
+}

@@ -1,0 +1,88 @@
+{
+  "title": "웹툰 공장 오프라인 데모",
+  "cuts": [
+    {
+      "id": "cut_001", "page": 1,
+      "description": "조용한 테스트 공간. 민이 문 앞에 서 있다.",
+      "prompt": "wide shot, a young adult standing by a studio doorway, clear lineart",
+      "camera": {"shot": "LS", "angle": "eye-level", "lens": "35mm", "position": "front"},
+      "characters": ["min"],
+      "image": "../05_rendered_cuts/demo/cut_001.png",
+      "dialogue": [{"speaker": "min", "text": "여기가 웹툰 공장이구나.", "position": "top-left", "type": "normal"}],
+      "gap_after": 130
+    },
+    {
+      "id": "cut_002", "page": 1,
+      "description": "민이 테스트용 안내 표지를 바라본다.",
+      "prompt": "close-up, curious expression, sign on a studio wall, no lettering",
+      "camera": {"shot": "CU", "angle": "eye-level", "lens": "85mm", "position": "three-quarter"},
+      "characters": ["min"],
+      "image": "../05_rendered_cuts/demo/cut_002.png",
+      "dialogue": [{"speaker": "안내", "text": "이 이미지는 AI 렌더가 아닌\n오프라인 조립 검증용입니다.", "position": "top", "type": "narration"}]
+    },
+    {
+      "id": "cut_003", "page": 1,
+      "description": "민이 테스트용 스위치에 손을 뻗는다.",
+      "prompt": "medium shot, reaching toward a small wall switch, low angle, clear lineart",
+      "camera": {"shot": "MS", "angle": "low-angle", "lens": "50mm", "position": "front"},
+      "characters": ["min"],
+      "image": "../05_rendered_cuts/demo/cut_003.png",
+      "dialogue": [{"speaker": "min", "text": "대사는 그림 위에\n정확하게 합성한다.", "position": "top-left", "type": "normal"}],
+      "gap_after": 220
+    },
+    {
+      "id": "cut_004", "page": 1,
+      "description": "스위치의 작은 표시등이 켜진다.",
+      "prompt": "close-up of an illuminated switch, high angle, clean lineart",
+      "camera": {"shot": "CU", "angle": "high-angle", "lens": "85mm", "position": "profile"},
+      "characters": [],
+      "image": "../05_rendered_cuts/demo/cut_004.png",
+      "dialogue": [{"speaker": "효과음", "text": "딸깍", "position": "top-right", "type": "sfx"}]
+    },
+    {
+      "id": "cut_005", "page": 2,
+      "description": "테스트가 끝나고 민이 고개를 끄덕인다.",
+      "prompt": "wide shot, a young adult nodding in a studio, soft light",
+      "camera": {"shot": "LS", "angle": "eye-level", "lens": "35mm", "position": "front"},
+      "characters": ["min"],
+      "image": "../05_rendered_cuts/demo/cut_005.png",
+      "dialogue": [{"speaker": "min", "text": "한 컷도 빠뜨리지 않고\n세로로 이어졌어.", "position": "top-left", "type": "thought"}]
+    },
+    {
+      "id": "cut_006", "page": 2,
+      "description": "민이 테스트 결과 창 앞에 선다.",
+      "prompt": "medium shot, a young adult checking a monitor, clean lineart",
+      "characters": ["min"], "image": "../05_rendered_cuts/demo/cut_006.png",
+      "dialogue": [{"speaker": "min", "text": "여백도 연출의 일부야.", "position": "auto"}],
+      "gap_after": 300
+    },
+    {
+      "id": "cut_007", "page": 2,
+      "description": "안내 창에 가로 폭이 표시된다.",
+      "prompt": "close-up of a blank studio monitor, no text",
+      "characters": [], "image": "../05_rendered_cuts/demo/cut_007.png",
+      "dialogue": [{"speaker": "안내", "text": "기본 가로 폭은 800px.\n그림 비율은 그대로 유지합니다.", "type": "narration", "position": "top"}]
+    },
+    {
+      "id": "cut_008", "page": 2,
+      "description": "두 개의 결과 파일 아이콘이 나란히 놓여 있다.",
+      "prompt": "two blank sheets on a desk, clean lineart",
+      "characters": [], "image": "../05_rendered_cuts/demo/cut_008.png",
+      "dialogue": [{"speaker": "안내", "text": "파일 경계는 컷 사이 여백에.\n그림과 대사를 자르지 않습니다.", "type": "narration", "position": "top"}]
+    },
+    {
+      "id": "cut_009", "page": 3,
+      "description": "민이 마지막 점검표를 확인한다.",
+      "prompt": "medium shot, a young adult checking a paper, clear lineart",
+      "characters": ["min"], "image": "../05_rendered_cuts/demo/cut_009.png",
+      "dialogue": [{"speaker": "min", "text": "열 컷 전부 확인!", "type": "shout", "position": "top-left"}]
+    },
+    {
+      "id": "cut_010", "page": 3,
+      "description": "테스트 원고의 마지막 화면.",
+      "prompt": "wide shot of an empty studio, soft light",
+      "characters": [], "image": "../05_rendered_cuts/demo/cut_010.png",
+      "dialogue": [{"speaker": "안내", "text": "오프라인 조립 검증 완료.\n실제 AI 렌더는 별도 확인합니다.", "type": "narration", "position": "top"}]
+    }
+  ]
+}

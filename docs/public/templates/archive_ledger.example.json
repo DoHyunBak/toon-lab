@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "status": "not_uploaded_not_verified",
+  "entries": [],
+  "entry_fields": ["artifact_id", "role", "source_sha256", "source_bytes", "permission_evidence", "event_ids", "drive_file_id", "drive_parent_id", "uploaded_at", "transferred_sha256", "transform_description", "provider_readback_sha256", "readback_bytes", "verification_result", "excluded_or_pending_reason"],
+  "cleanup": {"permitted": false, "requires": ["All authorized originals uploaded", "Exact original bytes read back and hashes match", "All production image and text versions linked in Google Drive", "Permissions and resume information verified", "Release-capable local delivery identified"]},
+  "note": "Google Drive is the production archive; Figma ingestion is not required. An entry or folder listing is not upload completion. Identical image bytes may share one file only when every occurrence and event is linked. Do not publish filled ledgers or keys."
+}

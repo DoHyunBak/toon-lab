@@ -1,0 +1,3 @@
+# HTTP, CLI, JSON and tests use the Python standard library.
+# Release dependency is pinned; validate the isolated public tree before publishing.
+Pillow==13.0.0
